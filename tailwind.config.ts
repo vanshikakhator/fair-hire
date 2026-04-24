@@ -81,24 +81,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
-        "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
-        },
-        "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
-        },
-      },
-      keyframes: {
+        "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
+        "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
         "fade-in": { from: { opacity: "0", transform: "translateY(8px)" }, to: { opacity: "1", transform: "translateY(0)" } },
         "glow-pulse": { "0%,100%": { boxShadow: "0 0 20px hsl(258 90% 66% / 0.3)" }, "50%": { boxShadow: "0 0 40px hsl(258 90% 66% / 0.6)" } },
       },
