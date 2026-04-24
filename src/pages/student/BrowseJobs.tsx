@@ -17,13 +17,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { jobs, Job } from "@/lib/mockData";
 import { Search, MapPin, Calendar, ArrowRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
-const toneClass = (tone?: Job["badgeTone"]) =>
+const toneClass = (tone?: string) =>
   tone === "success" ? "bg-success/15 text-success border-success/30"
   : tone === "warning" ? "bg-warning/15 text-warning border-warning/30"
   : tone === "info" ? "bg-info/15 text-info border-info/30"
@@ -33,22 +34,42 @@ const BrowseJobs = () => {
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("all");
   const [loc, setLoc] = useState("all");
-  const [open, setOpen] = useState<Job | null>(null);
+  const [open, setOpen] = useState<any | null>(null);
+  
+  const [appData, setAppData] = useState({ coverNote: "", linkedinUrl: "", githubUrl: "" });
 
-  const filtered = useMemo(() => jobs.filter(j => {
+  const { data: jobs = [], isLoading } = useQuery({
+    queryKey: ['jobs'],
+    queryFn: () => api.get('/jobs')
+  });
+
+  const applyMutation = useMutation({
+    mutationFn: (data: any) => api.post('/applications', data),
+    onSuccess: () => {
+      setOpen(null);
+      toast.success("Application submitted! We'll parse your resume now.");
+      setAppData({ coverNote: "", linkedinUrl: "", githubUrl: "" });
+    },
+    onError: (err: any) => toast.error(err.message)
+  });
+
+  const filtered = useMemo(() => jobs.filter((j: any) => {
     const q = query.toLowerCase();
-    const matchQ = !q || j.role.toLowerCase().includes(q) || j.company.toLowerCase().includes(q) || j.skills.join(" ").toLowerCase().includes(q);
+    const skillsString = j.skills ? j.skills.join(" ").toLowerCase() : "";
+    const matchQ = !q || j.role.toLowerCase().includes(q) || (j.company && j.company.toLowerCase().includes(q)) || skillsString.includes(q);
     const matchRole = role === "all" || j.role.toLowerCase().includes(role);
-    const matchLoc = loc === "all" || j.workMode.toLowerCase() === loc;
+    const matchLoc = loc === "all" || (j.workMode && j.workMode.toLowerCase() === loc);
     return matchQ && matchRole && matchLoc;
-  }), [query, role, loc]);
+  }), [query, role, loc, jobs]);
 
   return (
     <DashboardLayout role="student">
       <div className="space-y-6">
         <div>
           <h1 className="font-display text-3xl font-bold">Browse Openings</h1>
-          <p className="text-muted-foreground mt-1">{filtered.length} active roles matching your profile</p>
+          <p className="text-muted-foreground mt-1">
+            {isLoading ? "Loading..." : `${filtered.length} active roles matching your profile`}
+          </p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3">
@@ -77,14 +98,14 @@ const BrowseJobs = () => {
         </div>
 
         <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((j) => (
-            <div key={j.id} className="rounded-2xl bg-gradient-card border border-border p-5 hover:border-primary/40 transition-all hover:shadow-elegant group">
+          {filtered.map((j: any) => (
+            <div key={j._id} className="rounded-2xl bg-gradient-card border border-border p-5 hover:border-primary/40 transition-all hover:shadow-elegant group">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-xl shrink-0">{j.logo}</div>
+                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-xl shrink-0">{j.logo || "💼"}</div>
                   <div className="min-w-0">
                     <h3 className="font-semibold leading-tight truncate">{j.role}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{j.company}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{j.company || "Company"}</p>
                   </div>
                 </div>
                 {j.badge && (
@@ -94,19 +115,19 @@ const BrowseJobs = () => {
                 )}
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-                <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{j.location}</span>
+                <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{j.location || j.workMode}</span>
                 <span>·</span>
                 <span>{j.workMode}</span>
               </div>
               <p className="text-sm text-muted-foreground line-clamp-3 mb-4 min-h-[60px]">{j.description}</p>
               <div className="flex flex-wrap gap-1.5 mb-4">
-                {j.skills.slice(0, 4).map((s) => (
+                {(j.skills || []).slice(0, 4).map((s: string) => (
                   <span key={s} className="text-[11px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">{s}</span>
                 ))}
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />Posted {j.postedDays}d ago
+                  <Calendar className="h-3 w-3" />Active
                 </span>
                 <Button size="sm" variant="outline" onClick={() => setOpen(j)} className="group-hover:border-primary group-hover:text-primary">
                   Apply Now <ArrowRight className="ml-1 h-3 w-3" />
@@ -123,10 +144,17 @@ const BrowseJobs = () => {
             <DialogTitle className="font-display text-xl">Apply for {open?.role}</DialogTitle>
             <DialogDescription>{open?.company} · Your profile will be anonymized before sharing.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); setOpen(null); toast.success("Application submitted! We'll parse your resume now."); }} className="space-y-4">
+          <form onSubmit={(e) => { 
+            e.preventDefault(); 
+            applyMutation.mutate({ jobId: open?._id, ...appData });
+          }} className="space-y-4">
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Cover note (optional)</Label>
-              <Textarea className="mt-1.5 bg-secondary" placeholder="What excites you about this role?" rows={3} />
+              <Textarea 
+                value={appData.coverNote}
+                onChange={e => setAppData({...appData, coverNote: e.target.value})}
+                className="mt-1.5 bg-secondary" placeholder="What excites you about this role?" rows={3} 
+              />
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Resume (PDF)</Label>
@@ -134,13 +162,23 @@ const BrowseJobs = () => {
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">LinkedIn URL</Label>
-              <Input className="mt-1.5 bg-secondary" defaultValue="linkedin.com/in/alexchen" />
+              <Input 
+                value={appData.linkedinUrl}
+                onChange={e => setAppData({...appData, linkedinUrl: e.target.value})}
+                className="mt-1.5 bg-secondary" placeholder="linkedin.com/in/alexchen" 
+              />
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">GitHub URL</Label>
-              <Input className="mt-1.5 bg-secondary" defaultValue="github.com/alexchen-dev" />
+              <Input 
+                value={appData.githubUrl}
+                onChange={e => setAppData({...appData, githubUrl: e.target.value})}
+                className="mt-1.5 bg-secondary" placeholder="github.com/alexchen-dev" 
+              />
             </div>
-            <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground shadow-glow">Submit Application</Button>
+            <Button type="submit" disabled={applyMutation.isPending} className="w-full bg-gradient-primary text-primary-foreground shadow-glow">
+              {applyMutation.isPending ? "Submitting..." : "Submit Application"}
+            </Button>
           </form>
         </DialogContent>
       </Dialog>
