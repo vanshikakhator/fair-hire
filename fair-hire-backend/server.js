@@ -7,10 +7,30 @@ const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const Job = require('./models/Job');
 const Application = require('./models/Application');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure uploads directory exists
+const uploadDir = 'uploads';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const sanitized = file.originalname.replace(/\s+/g, '_');
+    cb(null, `${Date.now()}-${sanitized}`);
+  }
+});
+
+const upload = multer({ storage });
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
@@ -32,6 +52,16 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json({ message: 'Invalid token' });
   }
 };
+
+// --- FILE UPLOAD ROUTE ---
+app.post('/api/upload', authMiddleware, upload.single('file'), (req, res) => {
+  if (!req.file) {
+    console.log("Upload failed: No file received");
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  console.log(`File uploaded: ${req.file.filename} saved to ${req.file.path}`);
+  res.json({ filePath: `/uploads/${req.file.filename}` });
+});
 
 // --- AUTHENTICATION ROUTES ---
 app.post('/api/auth/register', async (req, res) => {
@@ -72,6 +102,26 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/auth/me', authMiddleware, async (req, res) => {
+  try {
+    const { 
+      firstName, lastName, gender, phoneNo, skills, experience, 
+      linkedinUrl, githubUrl, education, resumePath 
+    } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { 
+        firstName, lastName, gender, phoneNo, skills, experience, 
+        linkedinUrl, githubUrl, education, resumePath 
+      },
+      { new: true }
+    ).select('-password');
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -125,7 +175,7 @@ app.get('/api/jobs', authMiddleware, async (req, res) => {
 app.post('/api/applications', authMiddleware, async (req, res) => {
   if (req.user.role !== 'student') return res.status(403).json({ message: 'Only students can apply' });
   try {
-    const { jobId, coverNote, linkedinUrl, githubUrl } = req.body;
+    const { jobId, coverNote, linkedinUrl, githubUrl, firstName, lastName, gender, email, resumePath } = req.body;
     
     // Check if already applied
     const existing = await Application.findOne({ studentId: req.user.id, jobId });
@@ -136,7 +186,12 @@ app.post('/api/applications', authMiddleware, async (req, res) => {
       jobId,
       coverNote,
       linkedinUrl,
-      githubUrl
+      githubUrl,
+      firstName,
+      lastName,
+      gender,
+      email,
+      resumePath
     });
     await application.save();
     res.json(application);

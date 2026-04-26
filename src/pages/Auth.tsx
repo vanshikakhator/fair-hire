@@ -10,14 +10,14 @@ import { useMutation } from "@tanstack/react-query";
 
 export const StudentSignup = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", university: "", password: "" });
+  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", password: "" });
   
   const mutation = useMutation({
     mutationFn: (data: any) => api.post('/auth/register', { ...data, role: 'student' }),
     onSuccess: (data) => {
       setAuthToken(data.token);
       toast.success("Account created successfully!");
-      navigate("/student");
+      navigate("/student"); // Direct to jobs after signup
     },
     onError: (error: any) => toast.error(error.message)
   });
@@ -37,7 +37,6 @@ export const StudentSignup = () => {
           <div><Label>Last name</Label><Input className="mt-1.5" required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} /></div>
         </div>
         <div><Label>Email</Label><Input className="mt-1.5" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} /></div>
-        <div><Label>University</Label><Input className="mt-1.5" required value={formData.university} onChange={e => setFormData({...formData, university: e.target.value})} /></div>
         <div><Label>Password</Label><Input className="mt-1.5" type="password" required placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} /></div>
         <Button type="submit" disabled={mutation.isPending} className="w-full bg-gradient-primary text-primary-foreground shadow-glow">
           {mutation.isPending ? "Creating..." : "Create account"}
@@ -84,7 +83,7 @@ export const StudentLogin = () => {
 
 export const RecruiterSignup = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ companyName: "", recruiterName: "", jobTitle: "", email: "", password: "" });
+  const [formData, setFormData] = useState({ companyName: "", recruiterName: "", email: "", password: "" });
 
   const mutation = useMutation({
     mutationFn: (data: any) => api.post('/auth/register', { ...data, role: 'recruiter' }),
@@ -100,18 +99,17 @@ export const RecruiterSignup = () => {
   
   return (
     <AuthShell
-      title="Set up your company"
-      subtitle="Post roles and review unbiased candidates."
+      title="Hire purely on skill"
+      subtitle="Join top companies using FairHire's unbiased pipeline."
       accent="For Recruiters"
-      footer={<>Already onboarded? <Link to="/login/recruiter" className="text-primary hover:underline">Log in</Link></>}
+      footer={<>Already have an account? <Link to="/login/recruiter" className="text-primary hover:underline">Log in</Link></>}
     >
       <form onSubmit={submit} className="space-y-4">
-        <div><Label>Company name</Label><Input className="mt-1.5" required value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} /></div>
         <div className="grid grid-cols-2 gap-3">
-          <div><Label>Your name</Label><Input className="mt-1.5" required value={formData.recruiterName} onChange={e => setFormData({...formData, recruiterName: e.target.value})} /></div>
-          <div><Label>Job title</Label><Input className="mt-1.5" required value={formData.jobTitle} onChange={e => setFormData({...formData, jobTitle: e.target.value})} /></div>
+          <div><Label>Company name</Label><Input className="mt-1.5" required value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} /></div>
+          <div><Label>Recruiter name</Label><Input className="mt-1.5" required value={formData.recruiterName} onChange={e => setFormData({...formData, recruiterName: e.target.value})} /></div>
         </div>
-        <div><Label>Work email</Label><Input className="mt-1.5" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} /></div>
+        <div><Label>Work Email</Label><Input className="mt-1.5" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} /></div>
         <div><Label>Password</Label><Input className="mt-1.5" type="password" required placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} /></div>
         <Button type="submit" disabled={mutation.isPending} className="w-full bg-gradient-primary text-primary-foreground shadow-glow">
           {mutation.isPending ? "Creating..." : "Create company account"}

@@ -23,7 +23,13 @@ const applicationSchema = new mongoose.Schema({
   atsScore: {
     type: Number,
     default: Math.floor(Math.random() * (100 - 60 + 1)) + 60 // Mock ATS score for now
-  }
+  },
+  // Snapshots from profile
+  firstName: String,
+  lastName: String,
+  gender: String,
+  email: String,
+  resumePath: String
 }, { timestamps: true });
 
 module.exports = mongoose.model('Application', applicationSchema);

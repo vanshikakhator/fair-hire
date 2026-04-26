@@ -109,36 +109,60 @@ const RecruiterDashboard = () => {
         </div>
 
         <div>
-          <h2 className="font-semibold mb-3">Your Open Roles</h2>
-          <div className="rounded-2xl bg-gradient-card border border-border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-secondary/50">
-                <tr className="text-left text-[11px] tracking-wider text-muted-foreground">
-                  <th className="px-5 py-3 font-medium">ROLE</th>
-                  <th className="px-5 py-3 font-medium">APPLICANTS</th>
-                  <th className="px-5 py-3 font-medium">QUALIFIED (80%+)</th>
-                  <th className="px-5 py-3 font-medium">STATUS</th>
-                  <th className="px-5 py-3 font-medium text-right">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr><td colSpan={5} className="px-5 py-4 text-center">Loading...</td></tr>
-                ) : jobs.length === 0 ? (
-                  <tr><td colSpan={5} className="px-5 py-4 text-center">No roles posted yet.</td></tr>
-                ) : jobs.map((j: any) => (
-                  <tr key={j._id} className="border-t border-border hover:bg-secondary/30 transition-colors">
-                    <td className="px-5 py-4 font-medium">{j.role}</td>
-                    <td className="px-5 py-4 text-muted-foreground">{j.applicants || 0}</td>
-                    <td className="px-5 py-4"><span className="text-success font-semibold">{j.qualified || 0}</span></td>
-                    <td className="px-5 py-4"><StatusBadge status={j.status as "Active" | "Paused"} /></td>
-                    <td className="px-5 py-4 text-right">
-                      <Link to={`/recruiter/candidates?jobId=${j._id}`}><Button size="sm" variant="outline">Review</Button></Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <h2 className="font-semibold mb-4">Your Open Roles</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {isLoading ? (
+              <div className="col-span-full py-12 text-center text-muted-foreground">Loading roles...</div>
+            ) : jobs.length === 0 ? (
+              <div className="col-span-full py-12 text-center border-2 border-dashed border-border rounded-2xl text-muted-foreground">No roles posted yet.</div>
+            ) : jobs.map((j: any) => {
+              const daysAgo = Math.floor((new Date().getTime() - new Date(j.createdAt).getTime()) / (1000 * 3600 * 24));
+              
+              return (
+                <div key={j._id} className="rounded-2xl bg-gradient-card border border-border p-5 hover:border-primary/40 transition-all hover:shadow-elegant group flex flex-col">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg leading-tight truncate">{j.role}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <StatusBadge status={j.status as "Active" | "Paused"} />
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{j.workMode}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4 h-10">{j.description}</p>
+                  
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {(j.skills || []).slice(0, 3).map((s: string) => (
+                      <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border">{s}</span>
+                    ))}
+                    {j.skills?.length > 3 && <span className="text-[10px] text-muted-foreground">+{j.skills.length - 3} more</span>}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mb-4 pt-3 border-t border-border/50">
+                    <div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Applicants</div>
+                      <div className="font-semibold">{j.applicants || 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Qualified</div>
+                      <div className="font-semibold text-success">{j.qualified || 0}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
+                    <span className="text-[11px] text-muted-foreground">
+                      Posted {daysAgo === 0 ? "Today" : `${daysAgo}d ago`}
+                    </span>
+                    <Link to={`/recruiter/candidates?jobId=${j._id}`}>
+                      <Button size="sm" variant="outline" className="group-hover:border-primary group-hover:text-primary transition-colors">
+                        Review Resumes
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -18,7 +18,20 @@ const userSchema = new mongoose.Schema({
   // Fields for student
   firstName: String,
   lastName: String,
-  university: String,
+  gender: String,
+  phoneNo: String,
+  skills: [String],
+  experience: String,
+  linkedinUrl: String,
+  githubUrl: String,
+  resumePath: String,
+  education: {
+    degreeType: String,
+    institution: String,
+    stream: String,
+    graduationYear: String,
+    isWorking: { type: Boolean, default: false }
+  },
   // Fields for recruiter
   companyName: String,
   recruiterName: String,

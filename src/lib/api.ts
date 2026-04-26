@@ -34,5 +34,30 @@ export const api = {
       throw new Error(error.message || 'API Error');
     }
     return res.json();
+  },
+  put: async (endpoint: string, body: any) => {
+    const res = await fetch(`${API_URL}${endpoint}`, {
+      method: 'PUT',
+      headers: headers(),
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || 'API Error');
+    }
+    return res.json();
+  },
+  upload: async (endpoint: string, formData: FormData) => {
+    const token = getAuthToken();
+    const res = await fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || 'API Error');
+    }
+    return res.json();
   }
 };
