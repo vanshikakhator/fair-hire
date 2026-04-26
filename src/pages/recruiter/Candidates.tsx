@@ -61,7 +61,7 @@ const Candidates = () => {
               const student = app.studentId;
               const name = student ? `${student.firstName} ${student.lastName}` : "Anonymous Candidate";
               const university = student?.university || "T1 University";
-              
+
               return (
                 <div key={app._id} className="rounded-2xl bg-gradient-card border border-border p-5 hover:border-primary/40 transition-all">
                   <div className="flex items-center gap-4">
