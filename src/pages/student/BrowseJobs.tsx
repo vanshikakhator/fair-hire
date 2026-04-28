@@ -21,7 +21,7 @@ import { Search, MapPin, Calendar, ArrowRight, Briefcase, Check, X, FileText } f
 import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api, API_BASE_URL } from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const toneClass = (tone?: string) =>
@@ -271,7 +271,7 @@ const BrowseJobs = () => {
                           href={(() => {
                             if (resumePreviewUrl) return resumePreviewUrl;
                             if (!user?.resumePath) return "#";
-                            return user.resumePath.startsWith('http') ? user.resumePath : `http://localhost:5000${encodeURI(user.resumePath)}`;
+                            return user.resumePath.startsWith('http') ? user.resumePath : `${API_BASE_URL}${encodeURI(user.resumePath)}`;
                           })()} 
                           target="_blank" 
                           rel="noopener noreferrer" 
@@ -307,7 +307,7 @@ const BrowseJobs = () => {
                         try {
                           const { filePath } = await api.upload('/upload', formDataFile);
                           setSelectedResume(file); // Keep for name display
-                          setResumePreviewUrl(`http://localhost:5000${filePath}`);
+                          setResumePreviewUrl(`${API_BASE_URL}${filePath}`);
                           setUploadedFilePath(filePath);
                           toast.success("Resume uploaded successfully!");
                         } catch (err) {
@@ -332,7 +332,7 @@ const BrowseJobs = () => {
                         try {
                           const { filePath } = await api.upload('/upload', formDataFile);
                           setSelectedResume(file);
-                          setResumePreviewUrl(`http://localhost:5000${filePath}`);
+                          setResumePreviewUrl(`${API_BASE_URL}${filePath}`);
                           setUploadedFilePath(filePath);
                           toast.success("Resume uploaded successfully!");
                         } catch (err) {

@@ -7,7 +7,7 @@ import { Github, Linkedin, FileText, ShieldCheck, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api, API_BASE_URL } from "@/lib/api";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
@@ -149,7 +149,7 @@ const Profile = () => {
                             href={(() => {
                               if (resumePreviewUrl) return resumePreviewUrl;
                               if (!formData.resumePath) return "#";
-                              return formData.resumePath.startsWith('http') ? formData.resumePath : `http://localhost:5000${encodeURI(formData.resumePath)}`;
+                              return formData.resumePath.startsWith('http') ? formData.resumePath : `${API_BASE_URL}${encodeURI(formData.resumePath)}`;
                             })()} 
                             target="_blank" 
                             rel="noopener noreferrer" 
@@ -183,7 +183,7 @@ const Profile = () => {
                           try {
                             const { filePath } = await api.upload('/upload', formDataFile);
                             setFormData({...formData, resumePath: filePath});
-                            setResumePreviewUrl(`http://localhost:5000${filePath}`);
+                            setResumePreviewUrl(`${API_BASE_URL}${filePath}`);
                             toast.success("Resume uploaded successfully!");
                           } catch (err) {
                             toast.error("Upload failed");
@@ -206,7 +206,7 @@ const Profile = () => {
                           try {
                             const { filePath } = await api.upload('/upload', formDataFile);
                             setFormData({...formData, resumePath: filePath});
-                            setResumePreviewUrl(`http://localhost:5000${filePath}`);
+                            setResumePreviewUrl(`${API_BASE_URL}${filePath}`);
                             toast.success("Resume uploaded successfully!");
                           } catch (err) {
                             toast.error("Upload failed");
